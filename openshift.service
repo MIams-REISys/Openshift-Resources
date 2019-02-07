@@ -1,0 +1,26 @@
+[Unit]
+Description=OpenShift oc cluster up Service
+After=docker.service
+Requires=docker.service
+
+[Service]
+Environment="PUBLIC_IP=$(curl -s -m 60 http://169.254.169.254/latest/meta-data/public-ipv4)"
+Environment="ROUTING-SUFFIX=apps.$PUBLIC_IP.nip.io"
+
+PUBLIC_IP=$(curl -s -m 60 http://169.254.169.254/latest/meta-data/public-ipv4)'
+
+[Service]
+ExecStart=/usr/local/bin/oc cluster up --host-config-dir=/.oc/profiles/my-cluster/config/ --host-data-dir=/.oc/profiles/my-cluster/data --host-pv-dir=/.oc/profiles/my-cluster/pv --host-volumes-dir=/var/lib/origin/openshift.local.volumes --use-existing-config=true --public-hostname=$PUBLIC_IP --routing-suffix=$ROUTING-SUFFIX --loglevel=1 --metrics=true
+ExecStop=/usr/local/bin/oc cluster down
+WorkingDirectory=/var/lib/openshift
+Restart=no
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=occlusterup
+User=root
+Type=oneshot
+RemainAfterExit=yes
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target
